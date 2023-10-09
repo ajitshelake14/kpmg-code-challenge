@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Function to query Azure instance metadata
+get_azure_metadata() {
+    local key="$1"
+    local metadata_url="http://169.254.169.254/metadata/instance?api-version=2021-02-01"
+
+    # Query the Azure instance metadata service
+    local result=$(curl -s --connect-timeout 5 $metadata_url)
+
+    # Check if the query was successful
+    if [ $? -eq 0 ]; then
+        # Extract the value of the specified key using jq
+        local value=$(echo "$result" | jq -r ".$key")
+        
+        if [ "$value" != "null" ]; then
+            echo "$value"
+        else
+            echo "Key not found: $key"
+        fi
+    else
+        echo "Error querying Azure instance metadata."
+    fi
+}
+
+# Example usage
+data_key="compute/location"
+result=$(get_azure_metadata "$data_key")
+
+if [ $? -eq 0 ]; then
+    echo "Result for $data_key: $result"
+else
+    echo "Failed to retrieve metadata for $data_key"
+fi
